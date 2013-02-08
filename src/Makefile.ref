@@ -125,7 +125,7 @@ endif
 ifdef NES40
 DEFINES += -DNES40
 endif
-
+DEFINES += -DHAVE_VA_LIST_AS_ARRAY
 #
 # Line editing support.
 # Define JS_READLINE or JS_EDITLINE to enable line editing in the

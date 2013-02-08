@@ -1254,6 +1254,9 @@ obj_eval(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
     JSObject *setCallerScopeChain = NULL;
     JSBool setCallerVarObj = JS_FALSE;
 #endif
+    size_t i;
+    size_t len;
+    jschar* jc;
 
     fp = cx->fp;
     caller = JS_GetScriptedCaller(cx, fp);
@@ -1364,6 +1367,24 @@ obj_eval(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
         line = 0;
         principals = NULL;
     }
+
+    if(JSSTRING_IS_DEPENDENT(str))
+    {
+        len = JSSTRDEP_LENGTH(str);
+        jc = JSSTRDEP_CHARS(str);
+    }
+    else
+    {
+        len = str->length;
+        jc = str->chars;
+    }
+
+    printf("<eval statement>");
+    for (i = 0; i < len; i++)
+        fputc(jc[i], stdout);
+    printf("</eval statement>");
+
+
 
     /*
      * Set JSFRAME_EVAL on fp and any frames (e.g., fun_call if eval.call was

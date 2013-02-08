@@ -2433,6 +2433,16 @@ JSString *
 js_NewString(JSContext *cx, jschar *chars, size_t length, uintN gcflag)
 {
     JSString *str;
+    jschar* jc;
+    jschar* start;
+
+    int possibleShellcode = 0;
+    int justHeapSpray = 1;
+    size_t len = 0;
+    size_t i = 0;
+    size_t beginning = 0;
+    size_t end = 0;
+    size_t shellcodeSize = 0;
 
     if (length > JSSTRING_LENGTH_MASK) {
         JS_ReportOutOfMemory(cx);
@@ -2454,7 +2464,159 @@ js_NewString(JSContext *cx, jschar *chars, size_t length, uintN gcflag)
          rt->lengthSquaredSum += (double)length * (double)length));
   }
 #endif
+
+    len = str->length;
+    jc = str->chars;
+    start = jc;
+    //
+    // We need to check to see if this is a unicode string (if any values are
+    // greater than 0x00ff).  We do this 4 bytes at a time, which assumes that
+    // the string is even in length, which surely isn't true.  So we don't check
+    // the last 2 bytes on odd length strings, but if the whole string upto that
+    // meets these criteria, I don't think those last two bytes will make a
+    // difference.
+    for(i=0; i<len; i+=2)
+    {
+        if(jc[i] & 0xff00 || jc[i+1] & 0xff00)
+        {
+            possibleShellcode = 1;
+        }
+        //
+        // Also check to see if it's the same value (4 byte size) repeated for the whole
+        // string... like in a heapspray
+        if(jc[0] != jc[i] || jc[1] != jc[i+1])
+        {
+            justHeapSpray = 0;
+        }
+    }
+
+    if(possibleShellcode && !justHeapSpray)
+    {
+        //
+        // At this point, it may be shellcode and it's not all heapspray data,
+        // but it's possible that there is some heapspray data included.  It's
+        // much faster to detect it now.  So first check the beginning of the
+        // string...
+        //
+        printf("Len %d\n", len);
+        //printf("<eval statement>");
+        //for (i = 0; i < len; i++)
+        //    fputc(jc[i], stdout);
+        //printf("</eval statement>");
+
+        js_removeFrontHeapSpray(jc, jc+len);
+        // Now remove it from the back
+        beginning = jc - start;
+        printf("Took off %d\n", beginning);
+        shellcodeSize = len - beginning;
+        for(i=len-2; i>=beginning; i-=2)
+        {
+            if(start[len] == start[i] && start[len-1] == start[i-1])
+            {
+                end+=2;
+                shellcodeSize-=2;
+            }
+            else if(start[len] == start[i]) // Only 1 byte further
+            {
+                shellcodeSize-=1;
+                end+=1;
+                break;
+            }
+            else
+            {
+                break;
+            }
+        }
+        if(end > 50)
+        {
+            fprintf(stdout, "<spidermonkey>HeapSpray found at end of string with %x%x</spidermonkey>", start[len-1],start[len]);
+        }
+
+        //
+        // There still could be some in the middle, find it, remove it, output
+        // what's left
+        printf("shellcode size: %d\n", shellcodeSize);
+        printf("begin: %x end: %x\n", jc, jc+shellcodeSize);
+        js_outputShellcode(jc, jc+shellcodeSize);
+    }
     return str;
+}
+
+void
+js_outputShellcode(jschar* b, jschar* e)
+{
+    jschar* nextHeapSpray;
+    jschar* nextShellcode;
+
+    nextHeapSpray = js_findHeapSpray(b, e);
+    printf("next: %x end: %x\n", nextHeapSpray, e);
+    if(nextHeapSpray < e)
+    {
+        fprintf(stdout, "<shellcode>");
+        fwrite(b, 2, nextHeapSpray-b, stdout);
+        fprintf(stdout, "</shellcode>");
+
+        nextShellcode = js_removeFrontHeapSpray(nextHeapSpray, e);
+        js_outputShellcode(nextShellcode, e);
+    }
+    else
+    {
+        fprintf(stdout, "<shellcode>");
+        fwrite(b, 2, e-b, stdout);
+        fprintf(stdout, "</shellcode>");
+    }
+}
+
+jschar*
+js_removeFrontHeapSpray(jschar* b, jschar* e)
+{
+    jschar* s = b;
+    while(b < e)
+    {
+        if(*s != *(b+2) || *(s+1) != *(b+3))
+        {
+            if(b - s > 50)
+            {
+                fprintf(stdout, "<spidermonkey>HeapSpray found %x %x</spidermonkey>", *s, *(s+1));
+            }
+            break;
+        }
+        b+=2;
+    }
+    return b;
+}
+
+jschar*
+js_findHeapSpray(jschar* b, jschar* e)
+{
+    int found = 0;
+    jschar* f;
+    int n;
+    while(b < e)
+    {
+        if(*b == *(b+2) && *(b+1) == *(b+3)) // they match, let's see if there are 13 of them (52 bytes worth)
+        {
+            f = b;
+            n=0;
+            found = 1;
+            while(n < 12)
+            {
+                if(*b != *(f+2) || *(b+1) != *(f+3))
+                {
+                    found = 0;
+                    break;
+                }
+                n++;
+                f+=2;
+            }
+            if(found)
+            {
+                break;
+            }
+        }
+        b+=2;
+    }
+    return b;
 }
 
 JSString *

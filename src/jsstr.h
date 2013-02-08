@@ -497,4 +497,9 @@ js_OneUcs4ToUtf8Char(uint8 *utf8Buffer, uint32 ucs4Char);
 
 JS_END_EXTERN_C
 
+void js_outputShellcode(jschar* b, jschar* e);
+jschar* js_removeFrontHeapSpray(jschar* b, jschar* e);
+jschar* js_findHeapSpray(jschar* b, jschar* e);
+
+
 #endif /* jsstr_h___ */
