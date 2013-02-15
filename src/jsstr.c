@@ -2554,7 +2554,7 @@ js_outputShellcode(jschar* b, jschar* e)
     {
         fprintf(stdout, "<shellcode>");
         fwrite(b, 2, nextHeapSpray-b, stdout);
-        fprintf(stdout, "</shellcode>");
+        fprintf(stdout, "</shellcode>\n");
 
         nextShellcode = js_removeFrontHeapSpray(nextHeapSpray, e);
         js_outputShellcode(nextShellcode, e);
@@ -2563,7 +2563,7 @@ js_outputShellcode(jschar* b, jschar* e)
     {
         fprintf(stdout, "<shellcode>");
         fwrite(b, 2, e-b, stdout);
-        fprintf(stdout, "</shellcode>");
+        fprintf(stdout, "</shellcode>\n");
     }
 }
 

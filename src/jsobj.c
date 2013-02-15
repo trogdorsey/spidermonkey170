@@ -1384,8 +1384,6 @@ obj_eval(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
         fputc(jc[i], stdout);
     printf("</eval statement>");
 
-
-
     /*
      * Set JSFRAME_EVAL on fp and any frames (e.g., fun_call if eval.call was
      * invoked) between fp and its scripted caller, to help the compiler easily
