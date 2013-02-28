@@ -2533,7 +2533,7 @@ js_NewString(JSContext *cx, jschar *chars, size_t length, uintN gcflag)
         if(end > 50)
         {
             shellcodeSize = shellcodeSize - end;
-            fprintf(stdout, "<spidermonkey>HeapSpray found at end of string with %x%x</spidermonkey>\n", start[len-1],start[len]);
+            fprintf(stdout, "<heapspray>HeapSpray detected 0x%04x</heapspray>\n", *start);
         }
         //
         // There still could be some in the middle, find it, remove it, output
@@ -2586,7 +2586,7 @@ js_removeFrontHeapSpray(jschar* b, jschar* e)
         {
             if(s - b > 25)
             {
-                fprintf(stdout, "<spidermonkey>HeapSpray found %x</spidermonkey>\n", *b);
+                fprintf(stdout, "<heapspray>HeapSpray detected 0x%04x</heapspray>\n", *b);
                 if(*s == *b)
                 {
                     s++;
