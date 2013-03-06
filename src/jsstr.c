@@ -2499,7 +2499,7 @@ js_NewString(JSContext *cx, jschar *chars, size_t length, uintN gcflag)
         // string...
         //
         //printf("NEW STRING!!!!!!!!!!!!!!!!!!!!\n");
-        //printf("Len %d\n", len);
+        //printf("Len %d (%x): b: %p e: %p\n", len, len*2, jc, jc+len);
         //printf("<original>");
         //fwrite(jc, 2, len, stdout);
         //printf("</original>\n");
@@ -2557,16 +2557,16 @@ js_outputShellcode(jschar* b, jschar* e)
 
     nextHeapSpray = js_findHeapSpray(b, e);
     //printf("start: %p next: %p end: %p\n", b, nextHeapSpray, e);
-    if(nextHeapSpray < e)
+    if(nextHeapSpray < e && nextHeapSpray != b)
     {
-        fprintf(stdout, "<shellcode1>");
+        fprintf(stdout, "<shellcode>");
         fwrite(b, 2, nextHeapSpray-b, stdout);
-        fprintf(stdout, "</shellcode1>\n");
+        fprintf(stdout, "</shellcode>\n");
 
         nextShellcode = js_removeFrontHeapSpray(nextHeapSpray, e);
         js_outputShellcode(nextShellcode, e);
     }
-    else
+    else if(b != e)
     {
         fprintf(stdout, "<shellcode>");
         fwrite(b, 2, e-b, stdout);
@@ -2632,7 +2632,7 @@ js_findHeapSpray(jschar* b, jschar* e)
             }
             if(found)
             {
-                //printf("Found heapspray %x starting at %p\n", *p, p);
+                fprintf(stdout, "<heapspray>HeapSpray detected 0x%04x</heapspray>\n", *p);
                 break;
             }
         }
