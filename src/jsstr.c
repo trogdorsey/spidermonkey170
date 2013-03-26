@@ -2603,6 +2603,10 @@ js_removeFrontHeapSpray(jschar* b, jschar* e)
     {
         s = b;
     }
+    else
+    {
+        s = js_removeFrontHeapSpray(s, e);
+    }
     return s;
 }
 
