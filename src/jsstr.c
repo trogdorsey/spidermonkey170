@@ -2542,7 +2542,7 @@ js_NewString(JSContext *cx, jschar *chars, size_t length, uintN gcflag)
         //fwrite(jc, 2, shellcodeSize, stdout);
         //printf("</nofrontorback>");
 
-        //printf("shellcode size: %d\n", shellcodeSize);
+        //printf("shellcode size: %d\n", shellcodeSize); fflush(stdout);
         //printf("begin: %x end: %x\n", jc, jc+shellcodeSize);
         js_outputShellcode(jc, jc+shellcodeSize);
     }
@@ -2556,7 +2556,7 @@ js_outputShellcode(jschar* b, jschar* e)
     jschar* nextShellcode;
 
     nextHeapSpray = js_findHeapSpray(b, e);
-    //printf("start: %p next: %p end: %p\n", b, nextHeapSpray, e);
+    //printf("start: %p next: %p end: %p\n", b, nextHeapSpray, e); fflush(stdout);
     if(nextHeapSpray < e && nextHeapSpray != b)
     {
         fprintf(stdout, "<shellcode>");
@@ -2617,7 +2617,7 @@ js_findHeapSpray(jschar* b, jschar* e)
     int n;
     jschar* f;
     jschar* p = b;
-    while(p < e)
+    while(p < (e-52))
     {
         if(*p == *(p+2) && *(p+1) == *(p+3)) // they match, let's see if there are 13 of them (52 bytes worth)
         {
