@@ -2500,14 +2500,20 @@ js_NewString(JSContext *cx, jschar *chars, size_t length, uintN gcflag)
         //
         //printf("NEW STRING!!!!!!!!!!!!!!!!!!!!\n");
         //printf("Len %d (%x): b: %p e: %p\n", len, len*2, jc, jc+len);
-        //printf("<original>");
-        //fwrite(jc, 2, len, stdout);
-        //printf("</original>\n");
-
+        //if(len < 1000)
+        //{
+        //    printf("<original>");
+        //    fwrite(jc, 2, len, stdout);
+        //    printf("</original>\n");
+        //    printf("Length = %d\n", len);
+        //}
         jc = js_removeFrontHeapSpray(start, jc+len);
         // Now remove it from the back
         beginning = jc - start;
-        //printf("Took off %d\n", beginning);
+        //if(len < 1000)
+        //{
+        //    printf("Took off %d\n", beginning);
+        //}
         shellcodeSize = len - beginning;
         //printf("len: %d, beginning: %d\n", len, beginning);
         end = 2;
@@ -2529,12 +2535,15 @@ js_NewString(JSContext *cx, jschar *chars, size_t length, uintN gcflag)
                 break;
             }
         }
-        //printf("Took off %d\n", end);
         if(end > 50)
         {
             shellcodeSize = shellcodeSize - end;
             fprintf(stdout, "<heapspray>HeapSpray detected 0x%04x</heapspray>\n", *start);
         }
+        //if(len < 1000)
+        //{
+        //    printf("Shellcode Size is %d\n", shellcodeSize);
+        //}
         //
         // There still could be some in the middle, find it, remove it, output
         // what's left
@@ -2556,7 +2565,10 @@ js_outputShellcode(jschar* b, jschar* e)
     jschar* nextShellcode;
 
     nextHeapSpray = js_findHeapSpray(b, e);
-    //printf("start: %p next: %p end: %p\n", b, nextHeapSpray, e); fflush(stdout);
+    //if(e -b < 1000)
+    //{
+    //    printf("start: %p next: %p end: %p\n", b, nextHeapSpray, e); fflush(stdout);
+    //}
     if(nextHeapSpray < e && nextHeapSpray != b)
     {
         fprintf(stdout, "<shellcode>");
@@ -2592,7 +2604,6 @@ js_removeFrontHeapSpray(jschar* b, jschar* e)
                     s++;
                 }
                 foundHeapSpray = 1;
-
             }
             //printf("Distance is %d\n", s-b);
             break;
@@ -2614,6 +2625,7 @@ jschar*
 js_findHeapSpray(jschar* b, jschar* e)
 {
     int found = 0;
+    int foundHeapSpray = 0;
     int n;
     jschar* f;
     jschar* p = b;
@@ -2636,11 +2648,16 @@ js_findHeapSpray(jschar* b, jschar* e)
             }
             if(found)
             {
+                foundHeapSpray = 1;
                 fprintf(stdout, "<heapspray>HeapSpray detected 0x%04x</heapspray>\n", *p);
                 break;
             }
         }
         p+=2;
+    }
+    if(!foundHeapSpray)
+    {
+        p = b;
     }
     return p;
 }
